@@ -1,2 +1,4 @@
-package surreal.goldenglow.core;public class GGHooks {
+package surreal.goldenglow.core;
+
+public class GGHooks {
 }
