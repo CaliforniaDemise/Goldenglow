@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-// TODO Reload the texture map
 // TODO Make it work with FolderResourcePack
 public class RandomMobs {
 
