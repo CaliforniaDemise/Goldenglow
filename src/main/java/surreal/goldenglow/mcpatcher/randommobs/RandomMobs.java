@@ -6,11 +6,15 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.util.ResourceLocation;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
-// TODO Make it work with FolderResourcePack
 public class RandomMobs {
 
     // key: entity registry name | value: texture list
@@ -20,7 +24,36 @@ public class RandomMobs {
         TEXTURE_MAP = new Object2ObjectOpenHashMap<>();
     }
 
-    public static void loadTextureMap(String entryName) {
+    public static ResourceLocation getEntityTexture(Entity entity) {
+        List<ResourceLocation> list = getEntityTextureList(entity);
+        if (list == null) return null;
+        UUID uuid = entity.getUniqueID();
+        int random = nextInt(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), list.size() + 1);
+        if (random == 0) return null;
+        return list.get(random - 1);
+    }
+
+    public static List<ResourceLocation> getEntityTextureList(Entity entity) {
+        ResourceLocation entityLoc = EntityList.getKey(entity);
+        return TEXTURE_MAP.get(entityLoc);
+    }
+
+    public static void loadTextureFromFolder(File folder) {
+        try (Stream<Path> s = Files.walk(folder.toPath())) {
+            s.forEach(p -> {
+                File file = p.toFile();
+                String absolutePath = file.getPath();
+                if (!file.isDirectory() && file.getName().endsWith(".png") && absolutePath.contains("mcpatcher/mob/")) {
+                   loadTextureFromPath(absolutePath.substring(folder.getAbsolutePath().length() + 1));
+                }
+            });
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Could not walk through file " + folder.getAbsolutePath(), e);
+        }
+    }
+
+    public static void loadTextureFromPath(String entryName) {
         if (entryName.endsWith(".png") && entryName.contains("mcpatcher/mob/")) {
             StringBuilder builder = new StringBuilder();
             int i = entryName.length() - 5;
@@ -53,21 +86,7 @@ public class RandomMobs {
         }
     }
 
-    public static ResourceLocation getEntityTexture(Entity entity) {
-        List<ResourceLocation> list = getEntityTextureList(entity);
-        if (list == null) return null;
-        UUID uuid = entity.getUniqueID();
-        int random = nextInt(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), list.size() + 1);
-        if (random == 0) return null;
-        return list.get(random - 1);
-    }
-
-    public static List<ResourceLocation> getEntityTextureList(Entity entity) {
-        ResourceLocation entityLoc = EntityList.getKey(entity);
-        return TEXTURE_MAP.get(entityLoc);
-    }
-
-    public static int nextInt(long most, long least, int bound) {
+    private static int nextInt(long most, long least, int bound) {
         most ^= most << 13;
         most ^= most >> 7;
         most ^= most << 17;

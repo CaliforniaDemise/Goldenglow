@@ -1,7 +1,6 @@
 package surreal.goldenglow.core;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
-import surreal.goldenglow.Tags;
 
 import javax.annotation.Nullable;
 import java.util.Map;

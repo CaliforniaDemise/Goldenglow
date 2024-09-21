@@ -10,7 +10,7 @@ public class RandomMobsTransformer extends BasicTransformer {
     public static byte[] transformSimpleReloadableResourceManager(byte[] basicClass) {
         ClassNode cls = read(basicClass);
         for (MethodNode method : cls.methods) {
-            if (method.name.equals(getName("reloadResourcePack", ""))) {
+            if (method.name.equals(getName("reloadResourcePack", "func_110545_a"))) {
                 AbstractInsnNode node = method.instructions.getFirst();
                 while (node.getOpcode() != ALOAD) node = node.getNext();
                 method.instructions.insertBefore(node, hook("RandomMobs$reloadMap", "()V"));
@@ -36,6 +36,23 @@ public class RandomMobsTransformer extends BasicTransformer {
                     }
                 }
                 break;
+            }
+        }
+        return write(cls);
+    }
+
+    public static byte[] transformFolderResourcePack(byte[] basicClass) {
+        ClassNode cls = read(basicClass);
+        for (MethodNode method : cls.methods) {
+            if (method.name.equals(getName("getResourceDomains", "func_110587_b"))) {
+                AbstractInsnNode node = method.instructions.getFirst();
+                while (node.getOpcode() != INVOKESTATIC) node = node.getNext();
+                InsnList list = new InsnList();
+                list.add(new VarInsnNode(ALOAD, 0));
+                list.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/resources/FolderResourcePack", getName("resourcePackFile", ""), "Ljava/io/File;"));
+                list.add(hook("RandomMobs$loadTexture", "(Ljava/io/File;)V"));
+                method.instructions.insertBefore(node, list);
+               break;
             }
         }
         return write(cls);
