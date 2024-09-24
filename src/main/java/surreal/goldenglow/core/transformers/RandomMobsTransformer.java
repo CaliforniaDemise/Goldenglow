@@ -49,7 +49,7 @@ public class RandomMobsTransformer extends BasicTransformer {
                 while (node.getOpcode() != INVOKESTATIC) node = node.getNext();
                 InsnList list = new InsnList();
                 list.add(new VarInsnNode(ALOAD, 0));
-                list.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/resources/FolderResourcePack", getName("resourcePackFile", ""), "Ljava/io/File;"));
+                list.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/resources/FolderResourcePack", getName("resourcePackFile", "field_110597_b"), "Ljava/io/File;"));
                 list.add(hook("RandomMobs$loadTexture", "(Ljava/io/File;)V"));
                 method.instructions.insertBefore(node, list);
                break;
