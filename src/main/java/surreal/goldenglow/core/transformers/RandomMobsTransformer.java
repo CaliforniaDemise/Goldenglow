@@ -10,9 +10,9 @@ public class RandomMobsTransformer extends BasicTransformer {
     public static byte[] transformSimpleReloadableResourceManager(byte[] basicClass) {
         ClassNode cls = read(basicClass);
         for (MethodNode method : cls.methods) {
-            if (method.name.equals(getName("reloadResourcePack", "func_110545_a"))) {
-                AbstractInsnNode node = method.instructions.getFirst();
-                while (node.getOpcode() != ALOAD) node = node.getNext();
+            if (method.name.equals(getName("clearResources", "func_110543_a"))) {
+                AbstractInsnNode node = method.instructions.getLast();
+                while (node.getOpcode() != RETURN) node = node.getPrevious();
                 method.instructions.insertBefore(node, hook("RandomMobs$reloadMap", "()V"));
                 break;
             }
