@@ -28,9 +28,8 @@ public class RandomMobs {
         List<ResourceLocation> list = getEntityTextureList(entity);
         if (list == null) return null;
         UUID uuid = entity.getUniqueID();
-        int random = nextInt(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), list.size() + 1);
-        if (random == 0) return null;
-        return list.get(random - 1);
+        int random = nextInt(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), list.size());
+        return list.get(random);
     }
 
     public static List<ResourceLocation> getEntityTextureList(Entity entity) {
@@ -82,7 +81,15 @@ public class RandomMobs {
                 TEXTURE_MAP.put(entityLoc, list);
             }
 
-            list.add(new ResourceLocation(domain, entryName.substring(i + 1)));
+            String location = entryName.substring(i + 1);
+            int g = location.length() - 5;
+            char b = location.charAt(g);
+            boolean isReplacement = !Character.isDigit(b);
+
+            ResourceLocation resLoc = new ResourceLocation(domain, location);
+            if (list.isEmpty()) list.add(null);
+            if (isReplacement) list.set(0, resLoc);
+            else list.add(resLoc);
         }
     }
 
