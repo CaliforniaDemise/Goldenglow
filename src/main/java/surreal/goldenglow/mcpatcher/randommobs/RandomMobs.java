@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.util.ResourceLocation;
 
 import java.io.File;
@@ -18,23 +19,22 @@ import java.util.stream.Stream;
 public class RandomMobs {
 
     // key: entity registry name | value: texture list
-    private static Object2ObjectMap<ResourceLocation, List<ResourceLocation>> TEXTURE_MAP = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectMap<ResourceLocation, List<ResourceLocation>> TEXTURE_MAP = new Object2ObjectOpenHashMap<>();
 
     public static void reloadTextureMap() {
-        TEXTURE_MAP = new Object2ObjectOpenHashMap<>();
+        TEXTURE_MAP.clear();
     }
 
-    public static ResourceLocation getEntityTexture(Entity entity) {
-        List<ResourceLocation> list = getEntityTextureList(entity);
+    public static ResourceLocation getEntityTexture(Entity entity, ResourceLocation defLoc) {
+        List<ResourceLocation> list = getEntityTextureList(entity, defLoc);
         if (list == null) return null;
         UUID uuid = entity.getUniqueID();
         int random = nextInt(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), list.size());
         return list.get(random);
     }
 
-    public static List<ResourceLocation> getEntityTextureList(Entity entity) {
-        ResourceLocation entityLoc = EntityList.getKey(entity);
-        return TEXTURE_MAP.get(entityLoc);
+    public static List<ResourceLocation> getEntityTextureList(Entity entity, ResourceLocation defLoc) {
+        return TEXTURE_MAP.get(defLoc);
     }
 
     public static void loadTextureFromFolder(File folder) {
@@ -42,7 +42,7 @@ public class RandomMobs {
             s.forEach(p -> {
                 File file = p.toFile();
                 String absolutePath = file.getPath();
-                if (!file.isDirectory() && file.getName().endsWith(".png") && absolutePath.contains("mcpatcher/mob/")) {
+                if (!file.isDirectory()) {
                    loadTextureFromPath(absolutePath.substring(folder.getAbsolutePath().length() + 1));
                 }
             });
@@ -54,42 +54,55 @@ public class RandomMobs {
 
     public static void loadTextureFromPath(String entryName) {
         if (entryName.endsWith(".png") && entryName.contains("mcpatcher/mob/")) {
-            StringBuilder builder = new StringBuilder();
+            String textureLocation;
+            {
+                char c;
+                StringBuilder builder = new StringBuilder();
+                boolean check = false;
+                for (int i = 7; i < entryName.length(); i++) {
+                    c = entryName.charAt(i);
+                    if (!check && c == '/') {
+                        check = true;
+                        builder.append(':');
+                    }
+                    else builder.append(c);
+                }
+
+                textureLocation = builder.toString();
+            }
+
+            StringBuilder builder = new StringBuilder(".png");
+            boolean check = false;
+            boolean hasDigit = false;
             int i = entryName.length() - 5;
-            char c;
-            while ((c = entryName.charAt(i)) != '/') {
-                if (Character.isAlphabetic(c)) builder.insert(0, c);
+            while (i > 6) {
+                char c = entryName.charAt(i);
+                if (check || !Character.isDigit(c)) {
+                    if (builder.length() >= 10 && builder.toString().startsWith("/mcpatcher/")) {
+                        builder.delete(0, 14);
+                        builder.insert(0, ":textures/entity");
+                    }
+                    builder.insert(0, c);
+                }
+                else hasDigit = true;
+                if (c == '/') check = true;
                 i--;
             }
-
-            String path = builder.toString();
-
-            builder = new StringBuilder();
-
-            i = 7;
-            while ((c = entryName.charAt(i)) != '/') {
-                builder.append(c);
-                i++;
-            }
-
-            String domain = builder.toString();
-
-            ResourceLocation entityLoc = new ResourceLocation(domain, path);
-            List<ResourceLocation> list = TEXTURE_MAP.get(entityLoc);
+            
+            String defLocation = builder.toString();
+            ResourceLocation key = new ResourceLocation(defLocation);
+            List<ResourceLocation> list = TEXTURE_MAP.get(key);
             if (list == null) {
                 list = new ArrayList<>();
-                TEXTURE_MAP.put(entityLoc, list);
+                TEXTURE_MAP.put(key, list);
             }
+            
+            ResourceLocation value = new ResourceLocation(textureLocation);
+            System.out.println(defLocation + "   " + textureLocation);
 
-            String location = entryName.substring(i + 1);
-            int g = location.length() - 5;
-            char b = location.charAt(g);
-            boolean isReplacement = !Character.isDigit(b);
-
-            ResourceLocation resLoc = new ResourceLocation(domain, location);
             if (list.isEmpty()) list.add(null);
-            if (isReplacement) list.set(0, resLoc);
-            else list.add(resLoc);
+            if (!hasDigit) list.set(0, value);
+            else list.add(value); 
         }
     }
 

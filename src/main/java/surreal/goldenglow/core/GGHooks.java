@@ -30,7 +30,7 @@ public class GGHooks {
     }
 
     public static ResourceLocation RandomMobs$getEntityTexture(ResourceLocation defLoc, Entity entity) {
-        ResourceLocation location = RandomMobs.getEntityTexture(entity);
+        ResourceLocation location = RandomMobs.getEntityTexture(entity, defLoc);
         if (location == null) return defLoc;
         return location;
     }
